@@ -7,21 +7,78 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <style>
+        .grid-container {
+            display: grid;
+            grid-template-columns: 300px 1fr;  /* 300px for the left panel, the rest for the map */
+            height: 100vh;
+        }
+        .left-panel {
+            background-color: #f4f4f4;
+            padding: 20px;
+            box-sizing: border-box;
+        }
         #map{
-            height: 600px;
-            width: auto;
+            width: 100%;
+            height: 100%;
+            position: relative;
+            z-index: 1;
         }
-        #data{
-            position: absolute;
+        .filter{
+            position:absolute;      
+            z-index: 10;
+            top: 20px;               
+            left: 50%;                     /* 20px from the right side */
+            transform: translateX(-50%);   /* Center it */
+            background-color: rgba(255, 255, 255, 0.5); 
+            padding: 10px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;      
+            gap: 15px;               
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); 
+        }        
+        .filter select, .filter button {
+            padding: 8px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
         }
-    </style>
+        .filter button {
+            background-color: #bf2e2e;  
+            color: white;
+            cursor: pointer;
+        }
+        .filter button:hover {
+            background-color: #a62323;  
+        }
+     </style>
 </head>
 <body>
-    <h1>लगत प्रविष्टि विवरण</h1>
-    <h3>भूमि समस्या समाधान आयोग</h3>
-    <div id="map"></div>
-    <div id="data">
-        <h1>hello</h1>
+    <div class="grid-container">
+        <div class="left-panel">
+            <h1>लगत प्रविष्टि विवरण</h1>
+            <h3>भूमि समस्या समाधान आयोग</h3>
+        </div>
+        <div id="map">
+        </div>
+        <div class="filter">
+            <select id="province">
+                <option value="">Province</option>
+                <option value="province1">Province 1</option>
+                <option value="province2">Province 2</option>
+            </select>
+            <select id="district">
+                <option value="">District</option>
+                <option value="district1">District 1</option>
+                <option value="district2">District 2</option>
+            </select>
+            <select id="local-unit">
+                <option value="">Local Unit</option>
+                <option value="unit1">Unit 1</option>
+                <option value="unit2">Unit 2</option>
+            </select>
+            <button id="apply-filters">Apply</button>
+        </div>
     </div>
 <script>
     // Initialize the map and center it on Nepal

@@ -11,12 +11,18 @@
             height: 600px;
             width: auto;
         }
+        #data{
+            position: absolute;
+        }
     </style>
 </head>
 <body>
     <h1>लगत प्रविष्टि विवरण</h1>
     <h3>भूमि समस्या समाधान आयोग</h3>
     <div id="map"></div>
+    <div id="data">
+        <h1>hello</h1>
+    </div>
 <script>
     // Initialize the map and center it on Nepal
     var map = L.map('map').setView([28.3949, 84.1240], 7); // Centered on Nepal
@@ -24,18 +30,25 @@
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(map);
+
     // loading geojson file via geoserver
     fetch('http://localhost:8080/geoserver/LIRC/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=LIRC:811211&outputFormat=application/json')
-    .then(response => {
-        console.log('response received',response);
-        return response.json();
-    })
+    .then(response =>response.json()) //converts reponse to JSON
     .then(data =>{
-        console.log('geojson data received',data);
-        L.geoJSON(data).addTo(map);
-    })
-    .catch(error =>{
-        console.error('error fetching json',error);
+        // console.log('geojson data:',data);
+        L.geoJSON(data,{
+            onEachFeature:function(feature,layer){
+            // shows popup when clicked
+                layer.on('click',function(){
+                    let popupcontent = `<b>${feature.properties.gapa_napa} ${feature.properties.type_gn}</b><br>
+                                        Dalit: ${feature.properties["811211_bd"]}<br>
+                                        Sukumbasi: ${feature.properties["811211_bs"]}<br>
+                                        Abebasthit: ${feature.properties["811211_ab"]}<br>
+                                        Total: ${feature.properties["811211_tt"]}`;
+                    layer.bindPopup(popupcontent).openPopup(); // bind and open popup
+                });
+            }
+        }).addTo(map);
     });
     </script>
 </body>

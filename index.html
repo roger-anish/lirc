@@ -40,11 +40,27 @@
             onEachFeature:function(feature,layer){
             // shows popup when clicked
                 layer.on('click',function(){
-                    let popupcontent = `<b>${feature.properties.gapa_napa} ${feature.properties.type_gn}</b><br>
-                                        Dalit: ${feature.properties["811211_bd"]}<br>
-                                        Sukumbasi: ${feature.properties["811211_bs"]}<br>
-                                        Abebasthit: ${feature.properties["811211_ab"]}<br>
-                                        Total: ${feature.properties["811211_tt"]}`;
+                     let popupcontent = `<table border="1" style="border-collapse: collapse; text-align: center; width: 100%;">
+                                            <th colspan="2" style="background-color: #f2f2f2;">
+                                                ${feature.properties.gapa_napa} ${feature.properties.type_gn}
+                                            </th>
+                                            <tr>
+                                                <th>Dalit</th>
+                                                <td>${feature.properties["811211_bd"]}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Sukumbasi</th>
+                                                <td>${feature.properties["811211_bs"]}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Abebasthit</th>
+                                                <td>${feature.properties["811211_ab"]}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Total</th>
+                                                <td>${feature.properties["811211_tt"]}</td>
+                                            </tr>
+                                        </table>`;
                     layer.bindPopup(popupcontent).openPopup(); // bind and open popup
                 });
             }

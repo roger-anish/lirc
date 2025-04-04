@@ -214,7 +214,6 @@
         const filteredGeoJsonLayer = L.geoJSON(filteredFeatures,{
             onEachFeature:function(feature,layer){
             // shows popup when clicked
-                layer.on('click',function(){
                      let popupcontent = `<table border="1" style="border-collapse: collapse; text-align: center; width: 100%;">
                                             <th colspan="2" style="background-color: #f2f2f2;">
                                                 ${feature.properties.gapa_napa} ${feature.properties.type_gn}
@@ -236,12 +235,17 @@
                                                 <td>${feature.properties["811211_tt"]}</td>
                                             </tr>
                                         </table>`;
-                    layer.bindPopup(popupcontent).openPopup(); // bind and open popup
-                });
+                    layer.bindPopup(popupcontent); // bind and open popup
             }
         }).addTo(map);
+        // After the map has finished zooming, open the popup
+        map.once('zoom', function() {
+            filteredGeoJsonLayer.eachLayer(function(layer) {
+                layer.openPopup();
+            });
+        });
         // Zoom the map to the bounds of the filtered features
-        map.fitBounds(filteredGeoJsonLayer.getBounds());
+        map.fitBounds(filteredGeoJsonLayer.getBounds());        
         } else {
             alert("No matching features found.");
         }

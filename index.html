@@ -62,22 +62,16 @@
         <div id="map">
         </div>
         <div class="filter">
-            <select id="province">
+            <select id="province" >
                 <option value="">Province</option>
-                <option value="province1">Province 1</option>
-                <option value="province2">Province 2</option>
             </select>
-            <select id="district">
+            <select id="district" >
                 <option value="">District</option>
-                <option value="district1">District 1</option>
-                <option value="district2">District 2</option>
             </select>
-            <select id="local-unit">
+            <select id="gapa_napa">
                 <option value="">Local Unit</option>
-                <option value="unit1">Unit 1</option>
-                <option value="unit2">Unit 2</option>
             </select>
-            <button id="apply-filters">Apply</button>
+            <button id="apply-filters" >Apply</button>
         </div>
     </div>
 <script>
@@ -93,7 +87,8 @@
     .then(response =>response.json()) //converts reponse to JSON
     .then(data =>{
         // console.log('geojson data:',data);
-        L.geoJSON(data,{
+        geojsondata = data;  // geojsondata as a global variable
+        L.geoJSON(geojsondata,{
             onEachFeature:function(feature,layer){
             // shows popup when clicked
                 layer.on('click',function(){
@@ -122,6 +117,48 @@
                 });
             }
         }).addTo(map);
+        populateDropdowns();
+    });
+    // Populate all dropdowns with unique attribute values from the GeoJSON data.
+    function populateDropdowns() {
+      // Sets to hold unique values.
+      const provinces = new Set();
+      const districts = new Set();
+      const gapa_napa = new Set();
+
+      geojsondata.features.forEach(feature => {
+        if (feature.properties.province) provinces.add(feature.properties.province);
+        if (feature.properties.district) districts.add(feature.properties.district);
+        if (feature.properties.gapa_napa) gapa_napa.add(feature.properties.gapa_napa);
+      });
+       // Populate Province dropdown.
+       const provinceSelect = document.getElementById("province");
+       provinceSelect.innerHTML = `<option value="">Province</option>`;
+       provinces.forEach(val => {
+        provinceSelect.innerHTML += `<option value="${val}">${val}</option>`;
+      });
+
+      // Populate District dropdown.
+      const districtSelect = document.getElementById("district");
+      districtSelect.innerHTML = `<option value="">District</option>`;
+      districts.forEach(val => {
+        districtSelect.innerHTML += `<option value="${val}">${val}</option>`;
+      });
+
+      // Populate Local Unit dropdown.
+      const localUnitSelect = document.getElementById("gapa_napa");
+      localUnitSelect.innerHTML = `<option value="">Local Unit</option>`;
+      gapa_napa.forEach(val => {
+        localUnitSelect.innerHTML += `<option value="${val}">${val}</option>`;
+      });
+    }
+    // Call the function once the DOM is loaded.
+    document.addEventListener("DOMContentLoaded", populateDropdowns);
+    document.getElementById("apply-filters").addEventListener("click", function() {
+      const province = document.getElementById("province").value;
+      const district = document.getElementById("district").value;
+      const localUnit = document.getElementById("gapa_napa").value;
+        // console.log("Selected:", { province, district, localUnit });
     });
     </script>
 </body>

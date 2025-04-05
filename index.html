@@ -78,12 +78,18 @@
     // Initialize the map and center it on Nepal
     var map = L.map('map').setView([28.3949, 84.1240], 7); // Centered on Nepal
     // Add a base layer (OpenStreetMap)
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    var osmLayer= L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(map);
 
+
+    // --- Create empty GeoJSON layer (placeholder) ---
+    var geojsondata = L.geoJSON({
+        "type": "FeatureCollection",
+        "features": []
+    });
+
     // loading geojson file via geoserver
-    let geojsondata;
     fetch('http://localhost:8080/geoserver/LIRC/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=LIRC:811211&outputFormat=application/json')
     .then(response =>response.json()) //converts reponse to JSON
     .then(data =>{
@@ -120,6 +126,7 @@
         }).addTo(map);
         populateProvinces(); 
     });
+    // console.log("data",geojsondata);
 
     // Function to populate the province dropdown
     function populateProvinces() {
@@ -252,6 +259,23 @@
     }
     // Attach the applyFilters function to the Apply button
     document.getElementById("apply-filters").addEventListener("click", applyFilters);
+    
+    
+    // Add Esri World Imagery layer
+    var esriSat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/' +
+        'World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Tiles © Esri'
+     });
+    // Layer control
+    var baseMaps = {
+        "OpenStreetMap": osmLayer,
+        "ESRI Satellite": esriSat
+    };
+    var overlayMaps = {
+        "Local Level": geojsondata
+      };
+    // Add layer control to the map
+    L.control.layers(baseMaps, overlayMaps, { collapsed: false }).addTo(map);
 
 </script>
 </body>

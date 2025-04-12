@@ -6,16 +6,35 @@
     <title>LIRC</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <!-- for pie chart -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- for pie chart label -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+
     <style>
         .grid-container {
             display: grid;
-            grid-template-columns: 300px 1fr;  /* 300px for the left panel, the rest for the map */
+            grid-template-columns: 400px 1fr;  /* 300px for the left panel, the rest for the map */
             height: 100vh;
         }
         .left-panel {
-            background-color: #f4f4f4;
-            padding: 20px;
-            box-sizing: border-box;
+            background-color: #fbedbd;
+            display: flex;
+            flex-direction: column;
+            /* box-sizing: border-box;  */
+            justify-content: space-between;
+        }
+        .left-top{
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .left-bottom {
+            /* background-color: #fff; */
+            padding-top: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow-y: auto;
+            flex-grow: 1;
         }
         #map{
             width: 100%;
@@ -56,8 +75,15 @@
 <body>
     <div class="grid-container">
         <div class="left-panel">
-            <h1>लगत प्रविष्टि विवरण</h1>
-            <h3>भूमि समस्या समाधान आयोग</h3>
+            <div class="left-top"> 
+                <p><i>भूमिहीन दलित, भूमिहीन सुकुम्बासी तथा अव्यवस्थित बसोबासीहरुको</i></p>
+                <h1>लगत प्रविष्टि विवरण</h1>
+                <h3>भूमि समस्या समाधान आयोग</h3>
+            </div>
+            <div class="left-buttom", id="data-panel">
+                <p>निवेदन तथाङ्क</p>
+                <canvas id="pieChart" width="300" height="300"></canvas>
+            </div>         
         </div>
         <div id="map">
         </div>
@@ -86,14 +112,6 @@
         'World_Imagery/MapServer/tile/{z}/{y}/{x}', {
         attribution: 'Tiles © Esri'
     });
-
-
-
-    // loading geojson file via geoserver
-
-    // let districtGeoJsonData;
-    // let localunitLayer, districtLayer, provinceLayer;
-    // let activeGeoJsonData, currentFilteredLayer;
 
     // --- Create empty GeoJSON layer (placeholder) ---
     // localunit placeholder
@@ -199,6 +217,8 @@
       };
     // Add layer control to the map
     L.control.layers(overlayMaps,baseMaps,{ collapsed: false }).addTo(map);
+
+    let nationalTotal = { bd: 0, bs: 0, ab: 0 }; // for default pie chart
     
     // localunit data
     fetch('http://localhost:8080/geoserver/LIRC/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=LIRC:localunit&outputFormat=application/json')
@@ -207,6 +227,14 @@
         geojsondata = data;  // geojsondata as a global variable>> passess raw json layer to L.control
         localunitLayer.addData(geojsondata);
         populateProvinces(); 
+        // default pie-chart
+        geojsondata.features.forEach(f => {
+            nationalTotal.bd += f.properties.bd || 0;
+            nationalTotal.bs += f.properties.bs || 0;
+            nationalTotal.ab += f.properties.ab || 0;
+        });
+    // Render national total chart by default
+    renderPieChart(nationalTotal);
     });
 
     // district data
@@ -215,8 +243,7 @@
      .then(data => {
         districtGeoJsonData = data;
         districtLayer.addData(districtGeoJsonData);
-        // populateProvinces();
-     });
+    });
 
     // province data
     fetch('http://localhost:8080/geoserver/LIRC/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=LIRC:province&outputFormat=application/json')
@@ -224,17 +251,8 @@
      .then(data => {
         provinceGeoJsonData = data;
         provinceLayer.addData(provinceGeoJsonData);
-     });
-
-    // Track active data layer
-    // map.on('overlayadd', function (e) {
-    //     if (e.name === "Local Units") {
-    //         activeGeoJsonData = geojsondata;
-    //     } else if (e.name === "Districts") {
-    //         activeGeoJsonData = districtGeoJsonData;
-    //     }
-    // });
-    
+    });
+      
     // Function to populate the province dropdown
     function populateProvinces() {
         const provinces = new Set();
@@ -307,7 +325,7 @@
             document.getElementById("localunit").innerHTML = `<option value="">Select Local Unit</option>`;
         }
     });
-  
+
     // Function to apply filters and zoom to the selected feature
     function applyFilters() {
         const selectedProvince = document.getElementById("province").value;
@@ -347,48 +365,101 @@
                    (!selectedLocalUnit || feature.properties.localunit === selectedLocalUnit);
         });
         if (filteredFeatures.length > 0) {
-        // Create a new GeoJSON layer with the filtered features
-        const filteredGeoJsonLayer = L.geoJSON(filteredFeatures,{
-            onEachFeature:function(feature,layer){
-            // shows popup when clicked
-                     let popupcontent = `<table border="1" style="border-collapse: collapse; text-align: center; width: 100%;">
-                                            <th colspan="2" style="background-color: #f2f2f2;">
-                                                ${feature.properties[propertyName]}(${displayName}) 
-                                            </th>
-                                            <tr>
-                                                <th>Dalit</th>
-                                                <td>${feature.properties["bd"]}</td>
-                                            </tr>
-                                            <tr>
-                                                <th>Sukumbasi</th>
-                                                <td>${feature.properties["bs"]}</td>
-                                            </tr>
-                                            <tr>
-                                                <th>Abebasthit</th>
-                                                <td>${feature.properties["ab"]}</td>
-                                            </tr>
-                                            <tr>
-                                                <th>Total</th>
-                                                <td>${feature.properties["tt"]}</td>
-                                            </tr>
-                                        </table>`;
-                    layer.bindPopup(popupcontent); // bind and open popup
-            }
-        }).addTo(map);
-        // After the map has finished zooming, open the popup
-        map.once('zoom', function() {
-            filteredGeoJsonLayer.eachLayer(function(layer) {
-                layer.openPopup();
+            // data extract for piechart
+            let totalData = { bd: 0, bs: 0, ab: 0 };
+            filteredFeatures.forEach(f => {
+                totalData.bd += f.properties.bd || 0;
+                totalData.bs += f.properties.bs || 0;
+                totalData.ab += f.properties.ab || 0;
             });
-        });
-        // Zoom the map to the bounds of the filtered features
-        map.fitBounds(filteredGeoJsonLayer.getBounds());        
-        } else {
-            alert("No matching features found.");
-        }
+            renderPieChart(totalData); //pie chart function
+            // Create a new GeoJSON layer with the filtered features
+            const filteredGeoJsonLayer = L.geoJSON(filteredFeatures,{
+                onEachFeature:function(feature,layer){
+                // shows popup when clicked
+                        let popupcontent = `<table border="1" style="border-collapse: collapse; text-align: center; width: 100%;">
+                                                <th colspan="2" style="background-color: #f2f2f2;">
+                                                    ${feature.properties[propertyName]}
+                                                </th>
+                                                <tr>
+                                                    <th>Dalit</th>
+                                                    <td>${feature.properties["bd"]}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Sukumbasi</th>
+                                                    <td>${feature.properties["bs"]}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Abebasthit</th>
+                                                    <td>${feature.properties["ab"]}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Total</th>
+                                                    <td>${feature.properties["tt"]}</td>
+                                                </tr>
+                                            </table>`;
+                        layer.bindPopup(popupcontent); // bind and open popup
+                }
+            }).addTo(map);
+            // After the map has finished zooming, open the popup
+            map.once('zoom', function() {
+                filteredGeoJsonLayer.eachLayer(function(layer) {
+                    layer.openPopup();
+                });
+            });
+            // Zoom the map to the bounds of the filtered features
+            map.fitBounds(filteredGeoJsonLayer.getBounds());        
+            } else {
+                alert("No matching features found.");
+            }
     }
     // Attach the applyFilters function to the Apply button
     document.getElementById("apply-filters").addEventListener("click", applyFilters);
+
+    // pie chart generation
+    function renderPieChart(data) {
+        const ctx = document.getElementById('pieChart').getContext('2d');
+
+        // If chart exists, destroy it first
+        if (window.pieChartInstance) {
+            window.pieChartInstance.destroy();
+        }
+
+        window.pieChartInstance = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: ['दलित', 'सुकुम्बासी', 'अव्यवस्थित'],
+                datasets: [{
+                    label: 'निवेदन संख्याः',
+                    data: [data.bd, data.bs, data.ab],
+                    backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    },
+                    datalabels: {
+                    color: '#fff',
+                        formatter: (value, ctx) => {
+                            const dataArr = ctx.chart.data.datasets[0].data;
+                            const total = dataArr.reduce((sum, val) => sum + val, 0);
+                            const percentage = ((value / total) * 100).toFixed(1);
+                            return `${percentage}%`;
+                        },
+                        font: {
+                            weight: 'bold',
+                            size: 14
+                        }
+                    }
+                }
+            },
+            plugins: [ChartDataLabels]
+        });
+    }
     
 </script>
 </body>

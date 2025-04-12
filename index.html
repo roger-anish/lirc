@@ -87,30 +87,18 @@
         attribution: 'Tiles © Esri'
     });
 
-    // --- Create empty GeoJSON layer (placeholder) ---
-    var geojsondata = L.geoJSON({
-        "type": "FeatureCollection",
-        "features": []
-    });
+
 
     // loading geojson file via geoserver
 
-    //district data
-    // fetch('http://localhost:8080/geoserver/LIRC/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=LIRC:district&outputFormat=application/json')
-    // .then(response => response.json())
-    // .then(data => {
-    //     const districtjson = L.geoJSON(data);
-    //     districtjson.addTo(map);
-    
-    // localunit data
-    fetch('http://localhost:8080/geoserver/LIRC/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=LIRC:localunit&outputFormat=application/json')
-    .then(response =>response.json()) //converts reponse to JSON
-    .then(data =>{
-        // console.log('geojson data:',data);
-        geojsondata = data;  // geojsondata as a global variable>> passess raw json layer to L.control
-        // geojsondata.addData(data);  // to pass leaflet layer to L.control
-        L.geoJSON(geojsondata,{
-            onEachFeature:function(feature,layer){
+    // let districtGeoJsonData;
+    // let localunitLayer, districtLayer, provinceLayer;
+    // let activeGeoJsonData, currentFilteredLayer;
+
+    // --- Create empty GeoJSON layer (placeholder) ---
+    // localunit placeholder
+    var localunitLayer = L.geoJSON(null,{
+        onEachFeature:function(feature,layer){
             // shows popup when clicked
                 layer.on('click',function(){
                      let popupcontent = `<table border="1" style="border-collapse: collapse; text-align: center; width: 100%;">
@@ -134,14 +122,119 @@
                                                 <td>${feature.properties["tt"]}</td>
                                             </tr>
                                         </table>`;
+                    layer.bindPopup(popupcontent).openPopup();
+                });
+            }
+    });
+
+    // district placeholder
+    var districtLayer= L.geoJSON(null,{
+        onEachFeature: function (feature, layer) {
+                layer.on('click',function(){
+                     let popupcontent = `<table border="1" style="border-collapse: collapse; text-align: center; width: 100%;">
+                                            <th colspan="2" style="background-color: #f2f2f2;">
+                                             ${feature.properties.district} 
+                                            </th>
+                                            <tr>
+                                                <th>Dalit</th>
+                                                <td>${feature.properties["bd"]}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Sukumbasi</th>
+                                                <td>${feature.properties["bs"]}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Abebasthit</th>
+                                                <td>${feature.properties["ab"]}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Total</th>
+                                                <td>${feature.properties["tt"]}</td>
+                                            </tr>
+                                        </table>`;
                     layer.bindPopup(popupcontent).openPopup(); // bind and open popup
                 });
             }
-        }).addTo(map);
+    }).addTo(map);  // default layer to appear on map
+
+    // province placeholder
+    var provinceLayer = L.geoJSON(null,{
+        onEachFeature: function (feature, layer) {
+                layer.on('click',function(){
+                     let popupcontent = `<table border="1" style="border-collapse: collapse; text-align: center; width: 100%;">
+                                            <th colspan="2" style="background-color: #f2f2f2;">
+                                             ${feature.properties.province} 
+                                            </th>
+                                            <tr>
+                                                <th>Dalit</th>
+                                                <td>${feature.properties["bd"]}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Sukumbasi</th>
+                                                <td>${feature.properties["bs"]}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Abebasthit</th>
+                                                <td>${feature.properties["ab"]}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Total</th>
+                                                <td>${feature.properties["tt"]}</td>
+                                            </tr>
+                                        </table>`;
+                    layer.bindPopup(popupcontent).openPopup(); // bind and open popup
+                });
+            }
+    });
+
+    // Layer control
+    var baseMaps = {
+        "OpenStreetMap": osmLayer,
+        "ESRI Satellite": esriSat
+    };
+    var overlayMaps = {
+        "Localunit Level Map": localunitLayer,
+        "District Level Map": districtLayer,
+        "Province Level Map": provinceLayer
+      };
+    // Add layer control to the map
+    L.control.layers(overlayMaps,baseMaps,{ collapsed: false }).addTo(map);
+    
+    // localunit data
+    fetch('http://localhost:8080/geoserver/LIRC/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=LIRC:localunit&outputFormat=application/json')
+    .then(response =>response.json()) //converts reponse to JSON
+    .then(data =>{
+        geojsondata = data;  // geojsondata as a global variable>> passess raw json layer to L.control
+        localunitLayer.addData(geojsondata);
         populateProvinces(); 
     });
-    // console.log("data",geojsondata);
 
+    // district data
+    fetch('http://localhost:8080/geoserver/LIRC/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=LIRC:district&outputFormat=application/json')
+     .then(response => response.json())
+     .then(data => {
+        districtGeoJsonData = data;
+        districtLayer.addData(districtGeoJsonData);
+        // populateProvinces();
+     });
+
+    // province data
+    fetch('http://localhost:8080/geoserver/LIRC/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=LIRC:province&outputFormat=application/json')
+     .then(response => response.json())
+     .then(data => {
+        provinceGeoJsonData = data;
+        provinceLayer.addData(provinceGeoJsonData);
+     });
+
+    // Track active data layer
+    // map.on('overlayadd', function (e) {
+    //     if (e.name === "Local Units") {
+    //         activeGeoJsonData = geojsondata;
+    //     } else if (e.name === "Districts") {
+    //         activeGeoJsonData = districtGeoJsonData;
+    //     }
+    // });
+    
     // Function to populate the province dropdown
     function populateProvinces() {
         const provinces = new Set();
@@ -273,18 +366,6 @@
     // Attach the applyFilters function to the Apply button
     document.getElementById("apply-filters").addEventListener("click", applyFilters);
     
-    // Layer control
-    var baseMaps = {
-        "OpenStreetMap": osmLayer,
-        "ESRI Satellite": esriSat
-    };
-    var overlayMaps = {
-        "Localunit Level Map": geojsondata,
-        // "District level Map": districtjson
-      };
-    // Add layer control to the map
-    L.control.layers(baseMaps, overlayMaps, { collapsed: false }).addTo(map);
-
 </script>
 </body>
 </html>

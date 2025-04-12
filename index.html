@@ -68,7 +68,7 @@
             <select id="district" >
                 <option value="">Select District</option>
             </select>
-            <select id="gapa_napa">
+            <select id="localunit">
                 <option value="">Select Local Unit</option>
             </select>
             <button id="apply-filters" >Apply</button>
@@ -81,7 +81,11 @@
     var osmLayer= L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(map);
-
+    // Add Esri World Imagery layer
+    var esriSat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/' +
+        'World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Tiles © Esri'
+    });
 
     // --- Create empty GeoJSON layer (placeholder) ---
     var geojsondata = L.geoJSON({
@@ -90,34 +94,44 @@
     });
 
     // loading geojson file via geoserver
-    fetch('http://localhost:8080/geoserver/LIRC/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=LIRC:811211&outputFormat=application/json')
+
+    //district data
+    // fetch('http://localhost:8080/geoserver/LIRC/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=LIRC:district&outputFormat=application/json')
+    // .then(response => response.json())
+    // .then(data => {
+    //     const districtjson = L.geoJSON(data);
+    //     districtjson.addTo(map);
+    
+    // localunit data
+    fetch('http://localhost:8080/geoserver/LIRC/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=LIRC:localunit&outputFormat=application/json')
     .then(response =>response.json()) //converts reponse to JSON
     .then(data =>{
         // console.log('geojson data:',data);
-        geojsondata = data;  // geojsondata as a global variable
+        geojsondata = data;  // geojsondata as a global variable>> passess raw json layer to L.control
+        // geojsondata.addData(data);  // to pass leaflet layer to L.control
         L.geoJSON(geojsondata,{
             onEachFeature:function(feature,layer){
             // shows popup when clicked
                 layer.on('click',function(){
                      let popupcontent = `<table border="1" style="border-collapse: collapse; text-align: center; width: 100%;">
                                             <th colspan="2" style="background-color: #f2f2f2;">
-                                                ${feature.properties.gapa_napa} ${feature.properties.type_gn}
+                                                ${feature.properties.localunit} 
                                             </th>
                                             <tr>
                                                 <th>Dalit</th>
-                                                <td>${feature.properties["811211_bd"]}</td>
+                                                <td>${feature.properties["bd"]}</td>
                                             </tr>
                                             <tr>
                                                 <th>Sukumbasi</th>
-                                                <td>${feature.properties["811211_bs"]}</td>
+                                                <td>${feature.properties["bs"]}</td>
                                             </tr>
                                             <tr>
                                                 <th>Abebasthit</th>
-                                                <td>${feature.properties["811211_ab"]}</td>
+                                                <td>${feature.properties["ab"]}</td>
                                             </tr>
                                             <tr>
                                                 <th>Total</th>
-                                                <td>${feature.properties["811211_tt"]}</td>
+                                                <td>${feature.properties["tt"]}</td>
                                             </tr>
                                         </table>`;
                     layer.bindPopup(popupcontent).openPopup(); // bind and open popup
@@ -157,7 +171,7 @@
             districtSelect.innerHTML += `<option value="${district}">${district}</option>`;
         });
         // Reset local unit dropdown
-        document.getElementById("gapa_napa").innerHTML = `<option value="">Select Local Unit</option>`;
+        document.getElementById("localunit").innerHTML = `<option value="">Select Local Unit</option>`;
     }
 
     // Function to populate the local unit dropdown based on selected district
@@ -165,20 +179,19 @@
         const localUnits = new Set();
         geojsondata.features.forEach(feature => {
             if (feature.properties.district === selectedDistrict) {
-            const ref = feature.properties.gapa_napa; // Column A
-            // const name = feature.properties.unit_name; // Column B
+            const ref = feature.properties.localunit;
             if (ref) {
                 localUnits.add(`${ref}`);
             }
             }
         });
-        const localUnitSelect = document.getElementById("gapa_napa");
+        const localUnitSelect = document.getElementById("localunit");
         localUnitSelect.innerHTML = `<option value="">Select Local Unit</option>`;
         localUnits.forEach(localUnit => {
             localUnitSelect.innerHTML += `<option value="${localUnit}">${localUnit}</option>`;
         });
     }
-
+    
     // Event listener for province dropdown change
     document.getElementById("province").addEventListener("change", function() {
         const selectedProvince = this.value;
@@ -187,7 +200,7 @@
         } else {
             // Reset district and local unit dropdowns if no province is selected
             document.getElementById("district").innerHTML = `<option value="">Select District</option>`;
-            document.getElementById("gapa_napa").innerHTML = `<option value="">Select Local Unit</option>`;
+            document.getElementById("localunit").innerHTML = `<option value="">Select Local Unit</option>`;
         }
     });
 
@@ -198,7 +211,7 @@
             populateLocalUnits(selectedDistrict);
         } else {
             // Reset local unit dropdown if no district is selected
-            document.getElementById("gapa_napa").innerHTML = `<option value="">Select Local Unit</option>`;
+            document.getElementById("localunit").innerHTML = `<option value="">Select Local Unit</option>`;
         }
     });
   
@@ -206,7 +219,7 @@
     function applyFilters() {
         const selectedProvince = document.getElementById("province").value;
         const selectedDistrict = document.getElementById("district").value;
-        const selectedLocalUnit = document.getElementById("gapa_napa").value;
+        const selectedLocalUnit = document.getElementById("localunit").value;
         // console.log("Selected:", { selectedProvince, selectedDistrict, selectedLocalUnit });
 
         // Filter the GeoJSON data to find matching features
@@ -214,7 +227,7 @@
             // const properties = feature.properties;
             return (!selectedProvince || feature.properties.province === selectedProvince) &&
                    (!selectedDistrict || feature.properties.district === selectedDistrict) &&
-                   (!selectedLocalUnit || feature.properties.gapa_napa === selectedLocalUnit);
+                   (!selectedLocalUnit || feature.properties.localunit === selectedLocalUnit);
         });
         if (filteredFeatures.length > 0) {
         // Create a new GeoJSON layer with the filtered features
@@ -223,23 +236,23 @@
             // shows popup when clicked
                      let popupcontent = `<table border="1" style="border-collapse: collapse; text-align: center; width: 100%;">
                                             <th colspan="2" style="background-color: #f2f2f2;">
-                                                ${feature.properties.gapa_napa} ${feature.properties.type_gn}
+                                                ${feature.properties.localunit} 
                                             </th>
                                             <tr>
                                                 <th>Dalit</th>
-                                                <td>${feature.properties["811211_bd"]}</td>
+                                                <td>${feature.properties["bd"]}</td>
                                             </tr>
                                             <tr>
                                                 <th>Sukumbasi</th>
-                                                <td>${feature.properties["811211_bs"]}</td>
+                                                <td>${feature.properties["bs"]}</td>
                                             </tr>
                                             <tr>
                                                 <th>Abebasthit</th>
-                                                <td>${feature.properties["811211_ab"]}</td>
+                                                <td>${feature.properties["ab"]}</td>
                                             </tr>
                                             <tr>
                                                 <th>Total</th>
-                                                <td>${feature.properties["811211_tt"]}</td>
+                                                <td>${feature.properties["tt"]}</td>
                                             </tr>
                                         </table>`;
                     layer.bindPopup(popupcontent); // bind and open popup
@@ -260,19 +273,14 @@
     // Attach the applyFilters function to the Apply button
     document.getElementById("apply-filters").addEventListener("click", applyFilters);
     
-    
-    // Add Esri World Imagery layer
-    var esriSat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/' +
-        'World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        attribution: 'Tiles © Esri'
-     });
     // Layer control
     var baseMaps = {
         "OpenStreetMap": osmLayer,
         "ESRI Satellite": esriSat
     };
     var overlayMaps = {
-        "Local Level": geojsondata
+        "Localunit Level Map": geojsondata,
+        // "District level Map": districtjson
       };
     // Add layer control to the map
     L.control.layers(baseMaps, overlayMaps, { collapsed: false }).addTo(map);

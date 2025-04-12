@@ -314,9 +314,33 @@
         const selectedDistrict = document.getElementById("district").value;
         const selectedLocalUnit = document.getElementById("localunit").value;
         // console.log("Selected:", { selectedProvince, selectedDistrict, selectedLocalUnit });
+        // Remove existing filtered layer if any (optional: manage a global filtered layer to clear)
+        if (window.filteredLayer) {
+            map.removeLayer(window.filteredLayer);
+        }
+
+        let dataToFilter, propertyName, displayName;
+
+        // Determine which level to filter and what data to use
+        if (selectedLocalUnit) {
+            dataToFilter = geojsondata; // Localunit-level data
+            propertyName = "localunit";
+            displayName = "Local Unit";
+        } else if (selectedDistrict) {
+            dataToFilter = districtGeoJsonData; // District-level data
+            propertyName = "district";
+            displayName = "District";
+        } else if (selectedProvince) {
+            dataToFilter = provinceGeoJsonData; // Province-level data
+            propertyName = "province";
+            displayName = "Province";
+        } else {
+            alert("Please select at least one filter.");
+            return;
+        }
 
         // Filter the GeoJSON data to find matching features
-        const filteredFeatures = geojsondata.features.filter(feature => {
+        const filteredFeatures = dataToFilter.features.filter(feature => {
             // const properties = feature.properties;
             return (!selectedProvince || feature.properties.province === selectedProvince) &&
                    (!selectedDistrict || feature.properties.district === selectedDistrict) &&
@@ -329,7 +353,7 @@
             // shows popup when clicked
                      let popupcontent = `<table border="1" style="border-collapse: collapse; text-align: center; width: 100%;">
                                             <th colspan="2" style="background-color: #f2f2f2;">
-                                                ${feature.properties.localunit} 
+                                                ${feature.properties[propertyName]}(${displayName}) 
                                             </th>
                                             <tr>
                                                 <th>Dalit</th>

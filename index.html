@@ -184,8 +184,30 @@
     });
 
     // --- Create empty GeoJSON layer (placeholder) ---
+
+    // province symbology
+    function localunitColor(value) {
+        return value > 4845 ? '#6E2D08' :
+            value > 1835 ? '#C15209' :
+            value > 584  ? '#E87112' :
+            value > 201  ? '#FF9826' :
+            value > 62   ? '#F9C572' :
+            value > 10   ? '#FCE8A5' :
+            value >= 0   ? '#FEFEDB' :
+                            '#FFEDA0';
+    }
+    function localunitStyle(feature) {
+        return {
+            fillColor: localunitColor(feature.properties.tt), 
+            weight: 0.5,
+            opacity: 1,
+            color: 'black',
+            dashArray: '0',
+            fillOpacity: 0.8
+        };
+    }
     // localunit placeholder
-    var localunitLayer = L.geoJSON(null,{
+    var localunitLayer = L.geoJSON(null,{style: localunitStyle,
         onEachFeature:function(feature,layer){
             // shows popup when clicked
                 layer.on('click',function(){
@@ -215,8 +237,29 @@
             }
     });
 
+    // district symbology
+    function districtColor(value) {
+        return value > 32595 ? '#6E2D08' :
+            value > 1410 ? '#C15209' :
+            value > 5259 ? '#E87112' :
+            value > 2021  ? '#FF9826' :
+            value > 743   ? '#F9C572' :
+            value > 276   ? '#FCE8A5' :
+            value >= 0   ? '#FEFEDB' :
+                            '#FFEDA0';
+    }
+    function districtStyle(feature) {
+        return {
+            fillColor: districtColor(feature.properties.tt), 
+            weight: 0.5,
+            opacity: 1,
+            color: 'black',
+            dashArray: '0',
+            fillOpacity: 0.8
+        };
+    }
     // district placeholder
-    var districtLayer= L.geoJSON(null,{
+    var districtLayer= L.geoJSON(null,{style:districtStyle,
         onEachFeature: function (feature, layer) {
                 layer.on('click',function(){
                      let popupcontent = `<table border="1" style="border-collapse: collapse; text-align: center; width: 100%;">
@@ -245,8 +288,29 @@
             }
     }).addTo(map);  // default layer to appear on map
 
+    // province symbology
+    function provinceColor(value) {
+        return value > 296514 ? '#6E2D08' :
+            value > 228332 ? '#C15209' :
+            value > 219682  ? '#E87112' :
+            value > 122018  ? '#FF9826' :
+            value > 104987   ? '#F9C572' :
+            value > 85912   ? '#FCE8A5' :
+            value > 46105   ? '#FEFEDB' :
+                            '#FFEDA0';
+    }
+    function provinceStyle(feature) {
+        return {
+            fillColor: provinceColor(feature.properties.tt), 
+            weight: 0.5,
+            opacity: 1,
+            color: 'black',
+            dashArray: '0',
+            fillOpacity: 0.8
+        };
+    }
     // province placeholder
-    var provinceLayer = L.geoJSON(null,{
+    var provinceLayer = L.geoJSON(null,{style: provinceStyle,
         onEachFeature: function (feature, layer) {
                 layer.on('click',function(){
                      let popupcontent = `<table border="1" style="border-collapse: collapse; text-align: center; width: 100%;">
@@ -552,7 +616,6 @@
             plugins: [ChartDataLabels]
         });
     }
-    
 </script>
 </body>
 </html>

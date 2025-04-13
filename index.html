@@ -33,8 +33,9 @@
             height: 100vh;
         }
         .left-top{
+            flex: 0 0 35%;
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
         }
         .left-top img {
             width: 100px;              /* Adjust size as needed */
@@ -66,12 +67,16 @@
             font-family: sans-serif;
             padding: 0;
         }
+        .left-buttom{
+            flex: 1;
+            /* overflow: auto; */
+        }
         .data-header {
             background: linear-gradient(to right, rgba(248, 249, 250, 0.3), rgba(232, 240, 255, 0.3));
             border: 1px solid #d0dce9;
             border-radius: 12px;
             padding: 5px 7px;
-            margin-bottom: 5px;
+            margin-bottom: 10px;
             transition: all 0.3s ease;
         }
         .data-header h4 {
@@ -448,6 +453,16 @@
             }
             else{
                 placeNameSpan.textContent = 'नेपाल';
+            }
+
+            const placeDataSpan = document.getElementById('total-app');
+            if (filteredFeatures.length > 0) {
+                const feature = filteredFeatures[0];
+                const totalapp = feature.properties['tt']; // total data of localunit, district or province
+                placeDataSpan.textContent = totalapp;
+            }
+            else{
+                placeDataSpan.textContent = '११०३५५७';
             }
 
             // Create a new GeoJSON layer with the filtered features

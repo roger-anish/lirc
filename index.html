@@ -106,7 +106,7 @@
             z-index: 1;
         }
         .info.legend{
-            background: #d5ccb5db;
+            background: #e7ddc4db;
             padding: 10px;
             font-size: 12px;
             line-height: 18px;
@@ -121,7 +121,17 @@
             margin-right: 8px;
             opacity: 0.8;
         }
-        .filter{
+        /* .info.opacity-slider {
+            background: white;
+            padding: 10px;
+            font-size: 12px;
+            line-height: 18px;
+            color: #333;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            border-radius: 5px;
+            width: 150px;
+        } */
+                .filter{
             position:absolute;      
             z-index: 10;
             top: 20px;               
@@ -431,6 +441,42 @@
             map.addControl(provinceLegend);
         } else if (e.name === "स्थानीय तहगत नक्सा") {
             map.addControl(localLegend);
+        }
+        // active layer detection
+        if (e.name === "जिल्लागत नक्सा") {
+            activeLayer = districtLayer;
+        } else if (e.name === "प्रदेशगत नक्सा") {
+            activeLayer = provinceLayer;
+        } else if (e.name === "स्थानीय तहगत नक्सा") {
+            activeLayer = localunitLayer;
+        }
+        // Also apply current slider value to new layer
+        var value = parseFloat(document.getElementById('opacityRange').value);
+        if (activeLayer) {
+            activeLayer.setStyle({ opacity: value, fillOpacity: value });
+        }
+    });
+
+    // transparency control
+    var opacityControl = L.control({ position: 'topright' });
+    opacityControl.onAdd = function (map) {
+        var div = L.DomUtil.create('div', 'info opacity-slider');
+        div.innerHTML = `
+            <label>Opacity: <span id="opacity-value">0.8</span></label>
+            <input id="opacityRange" type="range" min="0" max="1" step="0.1" value="0.8">
+        `;
+        L.DomEvent.disableClickPropagation(div); // Prevent map dragging when interacting
+        return div;
+    };
+    opacityControl.addTo(map);
+
+    var activeLayer = districtLayer;
+    document.getElementById('opacityRange').addEventListener('input', function (e) {
+        var value = parseFloat(e.target.value);
+        document.getElementById('opacity-value').innerText = value;
+
+        if (activeLayer) {
+            activeLayer.setStyle({ opacity: value, fillOpacity: value });
         }
     });
 

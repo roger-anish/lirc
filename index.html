@@ -106,7 +106,7 @@
             z-index: 1;
         }
         .info.legend{
-            background: white;
+            background: #d5ccb5db;
             padding: 10px;
             font-size: 12px;
             line-height: 18px;
@@ -226,9 +226,18 @@
     var localLegend = L.control({ position: 'bottomleft' });
     localLegend.onAdd = function (map) {
         var div = L.DomUtil.create('div', 'info legend');
-        div.innerHTML = '<h4>स्थानीय तह</h4><i style="background:#fc8d62"></i> Example<br>';
+        var grades = [0, 10, 62, 201, 584,1835,4845];
+        div.innerHTML = '<h4>निवेदन संख्या</h4>';
+        for (var i = 0; i < grades.length; i++) {
+            var from = grades[i];
+            var to = grades[i + 1];
+            div.innerHTML +=
+                `<i style="background:${localunitColor(from + 1)}"></i> ` +
+                from + (to ? '&ndash;' + to : '+') + '<br>';
+        }
         return div;
     };
+
     // localunit placeholder
     var localunitLayer = L.geoJSON(null,{style: localunitStyle,
         onEachFeature:function(feature,layer){
@@ -263,9 +272,9 @@
     // district symbology
     function districtColor(value) {
         return value > 32595 ? '#6E2D08' :
-            value > 1410 ? '#C15209' :
-            value > 5259 ? '#E87112' :
-            value > 2021  ? '#FF9826' :
+            value > 5259 ? '#C15209' :
+            value > 2021 ? '#E87112' :
+            value > 1410  ? '#FF9826' :
             value > 743   ? '#F9C572' :
             value > 276   ? '#FCE8A5' :
             value >= 0   ? '#FEFEDB' :
@@ -286,7 +295,7 @@
     districtLegend.onAdd = function (map) {
         var div = L.DomUtil.create('div', 'info legend');
         var grades = [0, 276, 743, 2021, 5259, 1410, 32595];
-        grades.sort((a, b) => a - b);
+        grades.sort((a, b) => a - b); // for sorting grades 
         div.innerHTML = '<h4>निवेदन संख्या</h4>';
         for (var i = 0; i < grades.length; i++) {
             var from = grades[i];
@@ -297,6 +306,7 @@
         }
         return div;
     };
+    map.addControl(districtLegend); //default legend 
 
     // district placeholder
     var districtLayer= L.geoJSON(null,{style:districtStyle,
@@ -353,9 +363,18 @@
     var provinceLegend = L.control({ position: 'bottomleft' });
     provinceLegend.onAdd = function (map) {
         var div = L.DomUtil.create('div', 'info legend');
-        div.innerHTML = '<h4>प्रदेश</h4><i style="background:#66c2a5"></i> Example<br>';
+        var grades = [46105,85912,104987,122018,219682,228332,296514];
+        div.innerHTML = '<h4>निवेदन संख्या</h4>';
+        for (var i = 0; i < grades.length; i++) {
+            var from = grades[i];
+            var to = grades[i + 1];
+            div.innerHTML +=
+                `<i style="background:${provinceColor(from + 1)}"></i> ` +
+                from + (to ? '&ndash;' + to : '+') + '<br>';
+        }
         return div;
     };
+
     // province placeholder
     var provinceLayer = L.geoJSON(null,{style: provinceStyle,
         onEachFeature: function (feature, layer) {
@@ -400,28 +419,18 @@
     L.control.layers(overlayMaps,baseMaps,{ collapsed: false }).addTo(map);
 
     // removing already shown legend
-    function removeAllLegends() {
+    map.on('baselayerchange', function (e) {
         map.removeControl(districtLegend);
         map.removeControl(provinceLegend);
         map.removeControl(localLegend);
-    }
-    // dynamic map legend
-    map.on('overlayadd', function(e) {
+    
+        // dynamic map legend
         if (e.name === "जिल्लागत नक्सा") {
             map.addControl(districtLegend);
         } else if (e.name === "प्रदेशगत नक्सा") {
             map.addControl(provinceLegend);
         } else if (e.name === "स्थानीय तहगत नक्सा") {
             map.addControl(localLegend);
-        }
-    });
-    map.on('overlayremove', function(e) {
-        if (e.name === "जिल्लागत नक्सा") {
-            map.removeControl(districtLegend);
-        } else if (e.name === "प्रदेशगत नक्सा") {
-            map.removeControl(provinceLegend);
-        } else if (e.name === "स्थानीय तहगत नक्सा") {
-            map.removeControl(localLegend);
         }
     });
 

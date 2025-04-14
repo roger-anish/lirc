@@ -121,17 +121,7 @@
             margin-right: 8px;
             opacity: 0.8;
         }
-        /* .info.opacity-slider {
-            background: white;
-            padding: 10px;
-            font-size: 12px;
-            line-height: 18px;
-            color: #333;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
-            border-radius: 5px;
-            width: 150px;
-        } */
-                .filter{
+        .filter{
             position:absolute;      
             z-index: 10;
             top: 20px;               
@@ -658,7 +648,16 @@
             }
 
             // Create a new GeoJSON layer with the filtered features
-            const filteredGeoJsonLayer = L.geoJSON(filteredFeatures,{
+            function filterStyle(feature) {
+                return {
+                    weight: 3,
+                    opacity: 1,
+                    color: 'blue',
+                    dashArray: '1',
+                    fillOpacity: 0
+                };
+            }
+            const filteredGeoJsonLayer = L.geoJSON(filteredFeatures,{style:filterStyle,
                 onEachFeature:function(feature,layer){
                 // shows popup when clicked
                         let popupcontent = `<table border="1" style="border-collapse: collapse; text-align: center; width: 100%;">

@@ -105,6 +105,22 @@
             position: relative;
             z-index: 1;
         }
+        .info.legend{
+            background: white;
+            padding: 10px;
+            font-size: 12px;
+            line-height: 18px;
+            color: #333;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            border-radius: 5px;
+        }
+        .info.legend i {
+            width: 18px;
+            height: 18px;
+            float: left;
+            margin-right: 8px;
+            opacity: 0.8;
+        }
         .filter{
             position:absolute;      
             z-index: 10;
@@ -206,6 +222,13 @@
             fillOpacity: 0.8
         };
     }
+    // localunit legend
+    var localLegend = L.control({ position: 'bottomleft' });
+    localLegend.onAdd = function (map) {
+        var div = L.DomUtil.create('div', 'info legend');
+        div.innerHTML = '<h4>स्थानीय तह</h4><i style="background:#fc8d62"></i> Example<br>';
+        return div;
+    };
     // localunit placeholder
     var localunitLayer = L.geoJSON(null,{style: localunitStyle,
         onEachFeature:function(feature,layer){
@@ -258,6 +281,23 @@
             fillOpacity: 0.8
         };
     }
+    // district map legend
+    var districtLegend = L.control({ position: 'bottomleft' });
+    districtLegend.onAdd = function (map) {
+        var div = L.DomUtil.create('div', 'info legend');
+        var grades = [0, 276, 743, 2021, 5259, 1410, 32595];
+        grades.sort((a, b) => a - b);
+        div.innerHTML = '<h4>निवेदन संख्या</h4>';
+        for (var i = 0; i < grades.length; i++) {
+            var from = grades[i];
+            var to = grades[i + 1];
+            div.innerHTML +=
+                `<i style="background:${districtColor(from + 1)}"></i> ` +
+                from + (to ? '&ndash;' + to : '+') + '<br>';
+        }
+        return div;
+    };
+
     // district placeholder
     var districtLayer= L.geoJSON(null,{style:districtStyle,
         onEachFeature: function (feature, layer) {
@@ -309,6 +349,13 @@
             fillOpacity: 0.8
         };
     }
+    // province legend
+    var provinceLegend = L.control({ position: 'bottomleft' });
+    provinceLegend.onAdd = function (map) {
+        var div = L.DomUtil.create('div', 'info legend');
+        div.innerHTML = '<h4>प्रदेश</h4><i style="background:#66c2a5"></i> Example<br>';
+        return div;
+    };
     // province placeholder
     var provinceLayer = L.geoJSON(null,{style: provinceStyle,
         onEachFeature: function (feature, layer) {
@@ -351,6 +398,32 @@
       };
     // Add layer control to the map
     L.control.layers(overlayMaps,baseMaps,{ collapsed: false }).addTo(map);
+
+    // removing already shown legend
+    function removeAllLegends() {
+        map.removeControl(districtLegend);
+        map.removeControl(provinceLegend);
+        map.removeControl(localLegend);
+    }
+    // dynamic map legend
+    map.on('overlayadd', function(e) {
+        if (e.name === "जिल्लागत नक्सा") {
+            map.addControl(districtLegend);
+        } else if (e.name === "प्रदेशगत नक्सा") {
+            map.addControl(provinceLegend);
+        } else if (e.name === "स्थानीय तहगत नक्सा") {
+            map.addControl(localLegend);
+        }
+    });
+    map.on('overlayremove', function(e) {
+        if (e.name === "जिल्लागत नक्सा") {
+            map.removeControl(districtLegend);
+        } else if (e.name === "प्रदेशगत नक्सा") {
+            map.removeControl(provinceLegend);
+        } else if (e.name === "स्थानीय तहगत नक्सा") {
+            map.removeControl(localLegend);
+        }
+    });
 
     let nationalTotal = { bd: 0, bs: 0, ab: 0 }; // for default pie chart
     
